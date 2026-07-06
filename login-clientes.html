@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ingreso Clientes — AppSur</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script>
+  firebase.initializeApp({
+    apiKey: "AIzaSyBJmmRh347yN3YxVs-uSque7qXQpK5AzwQ",
+    authDomain: "appsur-2ffb3.firebaseapp.com",
+    projectId: "appsur-2ffb3",
+    storageBucket: "appsur-2ffb3.firebasestorage.app",
+    messagingSenderId: "392648391903",
+    appId: "1:392648391903:web:c99938ad620b1a62457d6a"
+  });
+  const auth = firebase.auth();
+  const db   = firebase.firestore();
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    background: #0f2d5e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Decoración fondo */
+  body::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  body::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(37,99,184,0.25) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 48px 44px;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Logo */
+  .logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 32px;
+    text-decoration: none;
+  }
+  .logo-mark {
+    width: 40px; height: 40px;
+    background: #0f2d5e;
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; flex-shrink: 0;
+  }
+  .logo-mark::after {
+    content: '';
+    position: absolute; bottom: 7px; right: 7px;
+    width: 10px; height: 10px;
+    background: #f97316; border-radius: 3px;
+  }
+  .logo-text {
+    font-size: 24px; font-weight: 800;
+    color: #0f2d5e; letter-spacing: -0.5px;
+  }
+  .logo-text span { color: #f97316; }
+
+  h2 {
+    font-size: 22px; font-weight: 800;
+    color: #0f2d5e; text-align: center;
+    margin-bottom: 6px; letter-spacing: -0.5px;
+  }
+  .subtitle {
+    font-size: 14px; color: #64748b;
+    text-align: center; margin-bottom: 32px;
+  }
+
+  .form-field { margin-bottom: 16px; }
+  .form-field label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: #475569; margin-bottom: 6px;
+  }
+  .form-field input {
+    width: 100%; padding: 12px 14px;
+    border: 1.5px solid #e2e8f0; border-radius: 10px;
+    font-size: 14px; font-family: inherit; color: #0f172a;
+    outline: none; transition: border 0.2s;
+  }
+  .form-field input:focus { border-color: #0f2d5e; }
+
+  .btn-ingresar {
+    width: 100%; background: #0f2d5e; color: white;
+    border: none; padding: 14px; border-radius: 10px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: background 0.2s;
+    margin-top: 4px; display: flex; align-items: center;
+    justify-content: center; gap: 8px;
+  }
+  .btn-ingresar:hover { background: #1a4a8a; }
+  .btn-ingresar:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .error-box {
+    background: #fee2e2; color: #991b1b;
+    border-radius: 8px; padding: 11px 14px;
+    font-size: 13px; margin-top: 14px;
+    display: none; text-align: center;
+  }
+
+  .volver {
+    display: block; text-align: center;
+    margin-top: 24px; font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    text-decoration: none; position: relative; z-index: 1;
+    transition: color 0.2s;
+  }
+  .volver:hover { color: white; }
+
+  /* Loading overlay */
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: #0f2d5e;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100; gap: 20px;
+  }
+  .loading-overlay.hidden { display: none; }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: #f97316;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-txt { color: rgba(255,255,255,0.7); font-size: 15px; font-weight: 500; }
+
+  .spinner-btn {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white; border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading mientras redirige -->
+<div class="loading-overlay hidden" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-txt" id="loading-txt">Ingresando a tu sistema...</div>
+</div>
+
+<!-- Card de login -->
+<div class="card">
+  <a href="/" class="logo">
+    <div class="logo-mark">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect x="2" y="2" width="7" height="7" rx="2" fill="white"/>
+        <rect x="11" y="2" width="7" height="7" rx="2" fill="white" opacity="0.5"/>
+        <rect x="2" y="11" width="7" height="7" rx="2" fill="white" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="logo-text">App<span>Sur</span></div>
+  </a>
+
+  <h2>Ingreso Clientes</h2>
+  <p class="subtitle">Accedé a tu sistema con tus datos</p>
+
+  <div class="form-field">
+    <label>Email</label>
+    <input type="email" id="inp-email" placeholder="tu@email.com" autocomplete="email">
+  </div>
+  <div class="form-field">
+    <label>Contraseña</label>
+    <input type="password" id="inp-pass" placeholder="••••••••">
+  </div>
+
+  <button class="btn-ingresar" id="btn-ingresar">
+    Ingresar a mi sistema
+  </button>
+
+  <div class="error-box" id="error-box"></div>
+</div>
+
+<a href="/" class="volver">← Volver a AppSur</a>
+
+<script>
+  // Mapa UID → URL del sistema
+  // Cada vez que agregues un cliente nuevo, sumás una línea acá
+  const CLIENTES = {
+    "F6lLLmRaIvXUEdbo3AQJxvLM59A3": "https://tribu-espacio-fitness.vercel.app/",
+    "QVehpHnvCwNIe3fgFQSFiP890Tu1": "https://institutoespejo.vercel.app/",
+    // "UID_NUEVO_CLIENTE": "https://su-sistema.vercel.app",
+  };
+
+  // Si ya está logueado, redirigir directo
+  auth.onAuthStateChanged(user => {
+    if(user && CLIENTES[user.uid]) {
+      mostrarLoading("Redirigiendo a tu sistema...");
+      setTimeout(() => { window.location.href = CLIENTES[user.uid]; }, 800);
+    }
+  });
+
+  function mostrarLoading(txt) {
+    document.getElementById("loading-txt").textContent = txt;
+    document.getElementById("loading").classList.remove("hidden");
+  }
+
+  document.getElementById("btn-ingresar").addEventListener("click", ingresar);
+  document.getElementById("inp-pass").addEventListener("keypress", e => {
+    if(e.key === "Enter") ingresar();
+  });
+
+  async function ingresar() {
+    const email = document.getElementById("inp-email").value.trim();
+    const pass  = document.getElementById("inp-pass").value;
+    const error = document.getElementById("error-box");
+    const btn   = document.getElementById("btn-ingresar");
+
+    error.style.display = "none";
+
+    if(!email || !pass) {
+      error.style.display = "block";
+      error.textContent = "Completá email y contraseña";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner-btn"></div> Ingresando...';
+
+    try {
+      const cred = await auth.signInWithEmailAndPassword(email, pass);
+      const uid  = cred.user.uid;
+
+      if(CLIENTES[uid]) {
+        mostrarLoading("¡Bienvenido! Abriendo tu sistema...");
+        setTimeout(() => { window.location.href = CLIENTES[uid]; }, 1000);
+      } else {
+        // UID no registrado como cliente
+        await auth.signOut();
+        error.style.display = "block";
+        error.textContent = "Tu cuenta no tiene un sistema asignado. Contactá a AppSur.";
+        btn.disabled = false;
+        btn.textContent = "Ingresar a mi sistema";
+      }
+    } catch(e) {
+      error.style.display = "block";
+      error.textContent =
+        e.code === "auth/wrong-password" || e.code === "auth/user-not-found" || e.code === "auth/invalid-credential"
+          ? "Email o contraseña incorrectos"
+          : "Error al ingresar. Intentá de nuevo.";
+      btn.disabled = false;
+      btn.innerHTML = "Ingresar a mi sistema";
+    }
+  }
+</script>
+</body>
+</html>
