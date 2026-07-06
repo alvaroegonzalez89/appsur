@@ -219,13 +219,9 @@
     // "UID_NUEVO_CLIENTE": "https://su-sistema.vercel.app",
   };
 
-  // Si ya está logueado, redirigir directo
-  auth.onAuthStateChanged(user => {
-    if(user && CLIENTES[user.uid]) {
-      mostrarLoading("Redirigiendo a tu sistema...");
-      setTimeout(() => { window.location.href = CLIENTES[user.uid]; }, 800);
-    }
-  });
+  // Al cargar la página cerramos sesión siempre
+  // así cada usuario ingresa con sus credenciales sin interferencia
+  auth.signOut();
 
   function mostrarLoading(txt) {
     document.getElementById("loading-txt").textContent = txt;
